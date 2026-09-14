@@ -28,6 +28,7 @@
     smoothScroll();
     splitLines();
     reveals();
+    repeats();
     parallax();
     counters();
     startRaf();
@@ -160,8 +161,13 @@
   }, { passive: true });
 
   /* ----------------------------------------------------- L3 · REVEALS --- */
+  var OPAKOVANE = '[data-reveal-repeat]';
+
   function reveals() {
-    var nodes = document.querySelectorAll('[data-reveal], .line-mask');
+    var nodes = Array.prototype.filter.call(
+      document.querySelectorAll('[data-reveal], .line-mask'),
+      function (n) { return !n.closest(OPAKOVANE); }
+    );
     if (!nodes.length) return;
 
     var io = new IntersectionObserver(function (entries) {
@@ -191,7 +197,12 @@
    *  Obsah by pak zůstal trvale neviditelný — což je horší selhání než
    *  vynechaná animace. Proto vše nad spodní hranou viewportu dorovnáme. */
   function sweep() {
-    var stuck = document.querySelectorAll('[data-reveal]:not(.is-in), .line-mask:not(.is-in)');
+    // Opakované skupiny se musí smět vracet do výchozího stavu, jinak by
+    // je pojistka hned zase rozsvítila a už by nikdy nepřehrály.
+    var stuck = Array.prototype.filter.call(
+      document.querySelectorAll('[data-reveal]:not(.is-in), .line-mask:not(.is-in)'),
+      function (n) { return !n.closest(OPAKOVANE); }
+    );
     for (var i = 0; i < stuck.length; i++) {
       if (stuck[i].getBoundingClientRect().top < global.innerHeight * 0.95) {
         stuck[i].classList.add('is-in');
@@ -201,6 +212,39 @@
 
   var sweepT;
   function sweepSoon() { clearTimeout(sweepT); sweepT = setTimeout(sweep, 400); }
+
+  /* ------------------------------------------------ L3 · OPAKOVANÝ REVEAL
+     Skupina, která se přehraje pokaždé, co přijde do záběru — ne jen
+     poprvé. Při odchodu se vrací do výchozího stavu, a to bez přechodu:
+     jinak by špendlíky na okraji viditelně odlétaly zpátky nahoru.      */
+  function repeats() {
+    var groups = document.querySelectorAll(OPAKOVANE);
+    if (!groups.length) return;
+
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        var g = e.target;
+        var kids = g.querySelectorAll('[data-reveal]');
+        var step = parseInt(g.dataset.stagger, 10) || 80;
+
+        for (var i = 0; i < kids.length; i++) {
+          var k = kids[i];
+          if (e.isIntersecting) {
+            k.style.setProperty('--reveal-delay', (i * step) + 'ms');
+            k.classList.add('is-in');
+          } else {
+            k.style.transition = 'none';
+            k.style.setProperty('--reveal-delay', '0ms');
+            k.classList.remove('is-in');
+            void k.offsetWidth;        // vynutit přepočet, než se přechod vrátí
+            k.style.transition = '';
+          }
+        }
+      });
+    }, { rootMargin: '0px 0px -10% 0px', threshold: 0.12 });
+
+    Array.prototype.forEach.call(groups, function (g) { io.observe(g); });
+  }
 
   global.addEventListener('scroll', sweepSoon, { passive: true });
   document.addEventListener('visibilitychange', function () {
@@ -330,7 +374,7 @@
   global.UM_MOTION = {
     init: init, reduced: reduced,
     morphIn: morphIn, rebind: rebind,
-    reveals: reveals, splitLines: splitLines, counters: counters
+    reveals: reveals, repeats: repeats, splitLines: splitLines, counters: counters
   };
 
   if (document.readyState === 'loading') {
