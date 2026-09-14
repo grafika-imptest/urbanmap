@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="cs" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Urbanmap.cz — nové developerské projekty podle lokality</title>
+<meta name="description" content="Mapově-datová platforma pro nové developerské projekty v ČR. Najděte nové bydlení nebo investiční příležitost podle lokality.">
+
+<link rel="preconnect" href="https://use.typekit.net" crossorigin>
+<link rel="preconnect" href="https://basemaps.cartocdn.com" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.css">
+
+<link rel="stylesheet" href="https://use.typekit.net/pit3voh.css">
+
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/pages.css">
+
+<script>
+  // Téma nastavíme před prvním paintem, aby neproblikl světlý režim.
+  (function () {
+    try {
+      var t = localStorage.getItem('um-theme');
+      if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t);
+    } catch (e) {}
+  })();
+</script>
+</head>
+
+<body data-no-smooth>
+<a class="skip" href="#explorer">Přejít na mapu projektů</a>
+<div id="chrome-header"></div>
+
+<!-- ==================================================================
+     COMMAND BAR — hledání je hlavní akce, ne dekorace hero sekce
+     ================================================================== -->
+<div class="command">
+  <button class="search-trigger" aria-label="Otevřít hledání">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="7.2" cy="7.2" r="4.6"/><path d="M10.6 10.6 14 14"/></svg>
+    <span>Hledat město, lokalitu, projekt nebo developera</span>
+    <span class="kbd">/</span>
+  </button>
+
+  <div class="command__quick">
+    <button class="chip" data-qstatus="selling" aria-pressed="false">V prodeji</button>
+    <button class="chip" data-qstatus="presale" aria-pressed="false">Předprodej</button>
+    <button class="chip" data-qstatus="planned" aria-pressed="false">Připravuje se</button>
+    <button class="chip" data-qtype="invest" aria-pressed="false">Investiční</button>
+    <button class="chip" data-qtype="leisure" aria-pressed="false">Rekreační</button>
+    <button class="chip" data-qinvest="premium" aria-pressed="false">Luxusní</button>
+  </div>
+
+  <div class="command__right">
+    <div class="seg js-view" role="tablist" aria-label="Zobrazení výsledků">
+      <button class="seg__btn" role="tab" data-view="map" aria-selected="true">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M1 3.4 5 1.8v8.8L1 12.2zM5 1.8l4 1.6v8.8l-4-1.6M9 3.4l4-1.6v8.8l-4 1.6"/></svg>
+        Mapa
+      </button>
+      <button class="seg__btn" role="tab" data-view="grid" aria-selected="false">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1.5" y="1.5" width="4.4" height="4.4"/><rect x="8.1" y="1.5" width="4.4" height="4.4"/><rect x="1.5" y="8.1" width="4.4" height="4.4"/><rect x="8.1" y="8.1" width="4.4" height="4.4"/></svg>
+        Mřížka
+      </button>
+      <button class="seg__btn" role="tab" data-view="list" aria-selected="false">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M1.6 3h10.8M1.6 7h10.8M1.6 11h10.8"/></svg>
+        Seznam
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- FILTER RAIL -->
+<div class="rail-wrap">
+  <div class="rail" role="toolbar" aria-label="Filtry"></div>
+  <div class="fpanel scroller" role="region" aria-label="Nastavení filtru"></div>
+</div>
+
+<!-- ==================================================================
+     EXPLORER — mapa je primární plocha
+     ================================================================== -->
+<main id="explorer" class="explorer" data-view="map">
+
+  <section class="mapwrap" aria-label="Mapa developerských projektů">
+    <div class="map"></div>
+
+    <div class="map-fallback">
+      <svg class="map-fallback__svg" aria-hidden="true"></svg>
+      <div class="map-fallback__note">
+        <span class="meta">Mapový podklad nedostupný</span>
+        <p style="margin-top:10px;font-size:var(--t-sm)" class="muted">
+          Prototyp načítá vektorový podklad ze sítě. Projekty najdete v mřížce i v seznamu.</p>
+      </div>
+    </div>
+
+    <div class="map-gate">
+      <span class="hint">Klikněte do mapy pro zoom kolečkem</span>
+    </div>
+
+    <div class="map-ui">
+      <div class="map-ui__top">
+        <div class="row row--gap" style="align-items:flex-start">
+          <div class="mtool mtool--row">
+            <button class="js-layers" title="Datové vrstvy" aria-label="Datové vrstvy">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M8 1.8 14.2 5 8 8.2 1.8 5zM2.4 8l5.6 2.9L13.6 8M2.4 11l5.6 2.9L13.6 11"/></svg>
+            </button>
+            <button class="js-draw-map" title="Kreslit oblast" aria-label="Kreslit oblast">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2.6 9.8 10 2.4l3.1 3.1-7.4 7.4-3.6.5z"/><path d="M2.6 13.4h11"/></svg>
+            </button>
+          </div>
+          <span class="hint js-draw-hint" hidden>Táhněte po mapě a vymezte oblast · <span class="kbd">esc</span> zrušit</span>
+        </div>
+
+        <button class="btn btn--ghost btn--sm js-fullscreen" style="background:var(--surface-2)">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M1.8 5.2V1.8h3.4M12.2 8.8v3.4H8.8M8.8 1.8h3.4v3.4M5.2 12.2H1.8V8.8"/></svg>
+          Celá obrazovka
+        </button>
+      </div>
+
+      <div class="layers" role="group" aria-label="Datové vrstvy mapy">
+        <h5>Datové vrstvy</h5>
+        <label><input type="checkbox" data-layer="projects" checked> Projekty</label>
+        <label><input type="checkbox" data-layer="transport"> Doprava</label>
+        <label><input type="checkbox" data-layer="nature"> Příroda</label>
+        <label class="is-soon"><input type="checkbox" disabled> Školy <span class="tag">fáze 2</span></label>
+        <label class="is-soon"><input type="checkbox" disabled> Občanská vybavenost <span class="tag">fáze 2</span></label>
+        <hr style="margin:8px 0">
+        <h5>Datové mapy</h5>
+        <label class="is-soon"><input type="checkbox" disabled> Heatmapa cen <span class="tag">fáze 2</span></label>
+        <label class="is-soon"><input type="checkbox" disabled> Růst cen <span class="tag">fáze 2</span></label>
+        <label class="is-soon"><input type="checkbox" disabled> Nájemní yield <span class="tag">fáze 2</span></label>
+        <label class="is-soon"><input type="checkbox" disabled> Plánovaný rozvoj <span class="tag">fáze 3</span></label>
+      </div>
+
+      <div class="map-ui__bottom">
+        <span class="hint">
+          <span class="meta">Zdroj</span> OpenStreetMap · CARTO · Urbanmap
+        </span>
+        <div class="row row--gap" style="align-items:flex-end">
+          <div class="mtool">
+            <button class="js-zoom-in" aria-label="Přiblížit"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M7 2.6v8.8M2.6 7h8.8"/></svg></button>
+            <button class="js-zoom-out" aria-label="Oddálit"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2.6 7h8.8"/></svg></button>
+            <button class="js-fit" aria-label="Zobrazit vše"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="7" cy="7" r="3.2"/><path d="M7 .9v2.1M7 11v2.1M.9 7h2.1M11 7h2.1"/></svg></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="preview" aria-label="Náhled projektu"></aside>
+  </section>
+
+  <!-- RESULTS -->
+  <section class="results" aria-label="Výsledky hledání">
+    <div class="results__head">
+      <div class="results__count"></div>
+      <div class="spacer"></div>
+      <label class="sel">
+        <span class="meta">Řadit</span>
+        <select class="js-sort" aria-label="Řazení výsledků">
+          <option value="relevance">Doporučené</option>
+          <option value="priceAsc">Cena vzestupně</option>
+          <option value="priceDesc">Cena sestupně</option>
+          <option value="available">Dostupnost</option>
+          <option value="investment">Investiční skóre</option>
+          <option value="newest">Fáze projektu</option>
+        </select>
+      </label>
+    </div>
+    <div class="results__body scroller">
+      <div class="results__inner" data-stagger="40"></div>
+    </div>
+  </section>
+</main>
+
+<div class="mobile-toggle">
+  <div class="seg js-view">
+    <button class="seg__btn" data-view="map" aria-selected="true">Mapa</button>
+    <button class="seg__btn" data-view="grid" aria-selected="false">Seznam</button>
+  </div>
+</div>
+
+<!-- ==================================================================
+     EDITORIAL — až pod mapou. Mapa zůstává první obrazovkou.
+     ================================================================== -->
+
+<!-- 01 · CO PLATFORMA VIDÍ -->
+<section class="section section--rule bleed" id="data">
+  <div class="section-head">
+    <div>
+      <span class="section-index">Datová základna</span>
+      <h2 class="display-2" data-split style="margin-top:20px">Celý český developerský trh na jedné mapě</h2>
+    </div>
+    <div class="section-head__aside">
+      <p class="lead">Urbanmap agreguje aktivní i dokončené projekty, jednotky, developery a lokality.
+        Každý projekt je datový objekt — ne inzerát. Proto jde filtrovat, porovnávat a vyhodnocovat.</p>
+      <a class="link-arrow" href="index.html?view=grid">Procházet všechny projekty
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 6.5h9M7.4 2.8 11.1 6.5 7.4 10.2"/></svg></a>
+    </div>
+  </div>
+
+  <div class="statline" data-stagger="80">
+    <div data-reveal="up"><span class="meta">Projektů v databázi</span><b data-count="20">0</b><span class="sub">aktivní i referenční</span></div>
+    <div data-reveal="up"><span class="meta">Jednotek</span><b data-count="1367">0</b><span class="sub">bytů, domů a apartmánů</span></div>
+    <div data-reveal="up"><span class="meta">Volných jednotek</span><b data-count="648">0</b><span class="sub">aktuálně v prodeji</span></div>
+    <div data-reveal="up"><span class="meta">Developerů</span><b data-count="8">0</b><span class="sub">s ověřeným profilem</span></div>
+    <div data-reveal="up"><span class="meta">Lokalit</span><b data-count="22">0</b><span class="sub">měst, čtvrtí a obcí</span></div>
+    <div data-reveal="up"><span class="meta">Objem nabídky</span><b data-count="14.2" data-count-dec="1" data-count-suffix=" mld.">0</b><span class="sub">Kč v aktivních projektech</span></div>
+  </div>
+</section>
+
+<!-- 02 · VYBRANÉ PROJEKTY -->
+<section class="section section--rule bleed" id="featured">
+  <div class="section-head">
+    <div>
+      <span class="section-index">Výběr redakce</span>
+      <h2 class="display-2" data-split style="margin-top:20px">Projekty, které stojí za pozornost</h2>
+    </div>
+    <div class="section-head__aside">
+      <p class="lead">Výběr není placené umístění. Kritériem je architektonická úroveň, kvalita lokality
+        a transparentnost dat, která developer o projektu poskytuje.</p>
+    </div>
+  </div>
+  <div class="grid-auto" id="featured-grid" data-stagger="90"></div>
+</section>
+
+<!-- 03 · LOKALITY -->
+<section class="section section--rule bleed" id="lokality">
+  <div class="section-head">
+    <div>
+      <span class="section-index">Lokality</span>
+      <h2 class="display-2" data-split style="margin-top:20px">Lokalita je datová vrstva, ne štítek</h2>
+    </div>
+    <div class="section-head__aside">
+      <p class="lead">Ke každé lokalitě sledujeme cenovou hladinu, meziroční vývoj, infrastrukturu
+        a lifestyle parametry. Projekt se pak dá číst v kontextu místa, kde stojí.</p>
+      <a class="link-arrow" href="lokality.html">Všechny lokality
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 6.5h9M7.4 2.8 11.1 6.5 7.4 10.2"/></svg></a>
+    </div>
+  </div>
+  <div class="grid-auto grid-auto--tight" id="locations-grid" data-stagger="70"></div>
+</section>
+
+<!-- 04 · INVESTIČNÍ VRSTVA -->
+<section class="section section--rule invest-band" id="investice">
+  <div class="bleed">
+    <div class="invest-band__grid">
+      <div>
+        <span class="section-index">Investiční vrstva</span>
+        <h2 class="display-2" data-split style="margin-top:20px">Ne „kde je hezky“, ale kde to dává smysl</h2>
+        <p class="lead" style="margin-top:28px">Investiční scoring kombinuje cenovou hladinu, vývoj trhu,
+          nájemní poptávku, infrastrukturu a sezónnost lokality. Ve fázi 2 se napojí na reálná transakční
+          a nájemní data — do té doby na platformě nenajdete žádný odhad vydávaný za fakt.</p>
+        <div class="row row--gap" style="margin-top:36px;gap:12px;flex-wrap:wrap">
+          <a class="btn btn--primary" href="index.html?view=grid&f=invest">Investiční příležitosti</a>
+          <a class="btn btn--ghost" href="magazin.html">Analýzy v magazínu</a>
+        </div>
+      </div>
+      <div class="invest-band__panel" data-reveal="up">
+        <div class="row" style="justify-content:space-between">
+          <span class="meta">Ukázka skóringu lokality</span>
+          <span class="badge badge--outline">Prototyp</span>
+        </div>
+        <div id="score-demo" style="margin-top:28px;display:flex;flex-direction:column;gap:26px"></div>
+        <p class="fgroup__note" style="margin-top:28px">
+          Skóre je v prototypu ilustrativní. Produkční model počítá s katastrálními transakcemi,
+          nájemní inzercí, dojezdovými časy a plánovaným rozvojem z územních plánů.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 05 · DEVELOPEŘI -->
+<section class="section section--rule bleed" id="developeri">
+  <div class="section-head">
+    <div>
+      <span class="section-index">Developeři</span>
+      <h2 class="display-2" data-split style="margin-top:20px">Developer je entita, ne řádek pod fotkou</h2>
+    </div>
+    <div class="section-head__aside">
+      <p class="lead">Profil ukazuje historii, regiony, dokončené reference i mapu realizací.
+        Uživatel vidí nejen to, co developer prodává, ale i to, co skutečně postavil.</p>
+      <a class="link-arrow" href="developeri.html">Všichni developeři
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 6.5h9M7.4 2.8 11.1 6.5 7.4 10.2"/></svg></a>
+    </div>
+  </div>
+  <div class="grid-auto grid-auto--tight" id="developers-grid" data-stagger="60"></div>
+</section>
+
+<!-- 06 · MAGAZÍN -->
+<section class="section section--rule bleed" id="magazin">
+  <div class="section-head">
+    <div>
+      <span class="section-index">Magazín</span>
+      <h2 class="display-2" data-split style="margin-top:20px">Analýzy, lokality, trendy</h2>
+    </div>
+    <div class="section-head__aside">
+      <p class="lead">Editorial vrstva platformy. Slouží čtenáři i vyhledávačům — každý článek
+        je vstupní branou do konkrétní lokality nebo kategorie projektů.</p>
+      <a class="link-arrow" href="magazin.html">Celý magazín
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 6.5h9M7.4 2.8 11.1 6.5 7.4 10.2"/></svg></a>
+    </div>
+  </div>
+  <div class="grid-auto" id="articles-grid" data-stagger="80"></div>
+</section>
+
+<!-- 07 · PRO DEVELOPERY — nadpis leží mezi oblohou a siluetou zástavby -->
+<section class="cta-hero" data-px="1">
+
+  <div class="cta-hero__backdrop" aria-hidden="true">
+    <img src="assets/img/panorama-znojmo/panorama_s_oblohou.webp" alt="" loading="lazy" decoding="async">
+  </div>
+  <div class="cta-hero__scene" data-px-layer="22" aria-hidden="true">
+    <img src="assets/img/panorama-znojmo/panorama_s_oblohou.webp" alt="" loading="lazy" decoding="async">
+  </div>
+  <div class="cta-hero__scrim" aria-hidden="true"></div>
+
+  <div class="cta-hero__aside cta-hero__aside--l" data-px-layer="-16">
+    <span class="section-index">Pro developery</span>
+    <p class="cta-hero__claim" style="margin-top:14px">Postavené projekty.<br>Nalezené na mapě.</p>
+  </div>
+
+  <div class="cta-hero__aside cta-hero__aside--r" data-px-layer="-16">
+    <p class="cta-hero__note">Standardní listing je zdarma. Prémiový profil přidává
+      video, půdorysy, 360°, přednostní pozici v lokalitě a analytiku poptávky.</p>
+    <div class="cta-hero__cta">
+      <a class="btn btn--accent" href="pro-developery.html#pridat">Přidat projekt</a>
+      <a class="link-arrow" href="pro-developery.html">Ceník
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 6.5h9M7.4 2.8 11.1 6.5 7.4 10.2"/></svg></a>
+    </div>
+  </div>
+
+  <div class="cta-hero__type" data-px-layer="-70">
+    <h2 class="cta-hero__title" data-split>Dostaňte projekt na mapu</h2>
+  </div>
+
+  <div class="cta-hero__scene cta-hero__scene--fg" data-px-layer="22" aria-hidden="true">
+    <img src="assets/img/panorama-znojmo/panorama_bez_oblohy.png" alt="" loading="lazy" decoding="async">
+  </div>
+</section>
+
+<div id="chrome-footer"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="js/data.js"></script>
+<script src="js/core.js"></script>
+<script src="js/cards.js"></script>
+<script src="js/motion.js"></script>
+<script src="js/map.js"></script>
+<script src="js/explorer.js"></script>
+<script src="js/home.js"></script>
+</body>
+</html>

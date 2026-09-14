@@ -1,0 +1,205 @@
+/* ==========================================================================
+   URBANMAP — DESIGN TOKENS
+   Jediný zdroj pravdy pro barvy, typografii, spacing, radius, motion.
+   Light = default na :root. Dark = [data-theme="dark"] + system preference.
+   ========================================================================== */
+
+:root {
+  /* ---------- BRAND / NEUTRALS (LIGHT) ---------------------------------- */
+  --paper:        #F2EDE6;   /* teplá krémová — ground celé stránky    */
+  --paper-2:      #E8E1D7;   /* zapuštěné plochy, mapové pozadí        */
+  --surface:      #FBF8F4;   /* karty, panely                          */
+  --surface-2:    #FFFDFA;   /* elevované panely, dialogy              */
+  --surface-inv:  #1A1613;   /* inverzní blok (footer)                 */
+
+  --ink:          #1A1613;   /* primární text — teplá čerň             */
+  --ink-70:       #52483F;   /* sekundární text                        */
+  --ink-45:       #746759;   /* metadata, labely                       */
+  --ink-25:       #B3A697;   /* disabled                               */
+  --ink-inv:      #F4EFE8;   /* text na inverzním podkladu             */
+
+  --line:         rgba(26, 22, 19, 0.13);
+  --line-strong:  rgba(26, 22, 19, 0.24);
+  --line-soft:    rgba(26, 22, 19, 0.06);
+
+  /* ---------- ACCENT ----------------------------------------------------- */
+  /* Hluboká hnědá pro interakci. Musí unést text na krémovém podkladu,
+     proto je výrazně tmavší než dekorativní taupe níž (kontrast 6,9:1). */
+  --accent:       #6B4A35;
+  --accent-ink:   #FFFDFA;
+  --accent-soft:  rgba(107, 74, 53, 0.10);
+  --accent-line:  rgba(107, 74, 53, 0.34);
+
+  /* Sekundární taupe — plochy, editorial, lokality. Nikdy ne pod text. */
+  --clay:         #A3897A;
+  --clay-soft:    rgba(163, 137, 122, 0.16);
+
+  /* ---------- STATUS ----------------------------------------------------- */
+  --st-planned:   #8C8074;   /* připravuje se  */
+  --st-presale:   #A97C2E;   /* v předprodeji  */
+  --st-selling:   #3C7550;   /* v prodeji      */
+  --st-done:      #5C5147;   /* dokončeno      */
+  --st-sold:      #97564D;   /* vyprodáno      */
+
+  /* Podklad barevného štítku. Vlastní, záměrně tmavší sada — štítek má vždy
+     bílý text a leží nad fotografií, takže nesmí reagovat na světlý/tmavý
+     režim ani na to, jak světlý je snímek pod ním. Kontrast s bílou 5,2–7,7:1. */
+  --st-tag-planned: #6B6157;
+  --st-tag-presale: #8A6013;
+  --st-tag-selling: #2F7048;
+  --st-tag-done:    #4A4038;
+  --st-tag-sold:    #99433A;
+
+  /* ---------- MAP -------------------------------------------------------- */
+  --map-ground:   #EAE3D9;
+  --map-water:    #D6D9D3;
+  --map-green:    #DFDBCB;
+  --map-built:    #E2DACE;
+  --map-road:     #FFFDFA;
+  --map-road-2:   #F3EDE4;
+  --map-boundary: rgba(26, 22, 19, 0.17);
+  --map-label:    #6B5F52;
+  --map-label-halo: rgba(250, 246, 240, 0.85);
+
+  /* ---------- TYPOGRAFIE ------------------------------------------------- */
+  /* Jediná rodina pro celý web: ITC Avant Garde Gothic Pro (Adobe Fonts,
+     kit pit3voh). Lokální záložkou je Century Gothic — nejbližší geometrický
+     grotesk, který bývá na Windows i macOS.
+     Kit nese váhy 300 / 500 / 600 / 700; žebřík stavíme na nich. */
+  --font-sans: "itc-avant-garde-gothic-pro", "Century Gothic",
+               system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+  --font-display: var(--font-sans);
+  --font-mono:    var(--font-sans);
+
+  --fw-book:  300;   /* odstavce, lead                */
+  --fw-med:   500;   /* UI, popisky, čísla            */
+  --fw-demi:  600;   /* nadpisy — verzálky            */
+
+  /* Display škála — fluidní, bez breakpointů. */
+  --t-d1: clamp(2.75rem, 6.2vw, 7.5rem);    /* hero / sekční moment   */
+  --t-d2: clamp(2.15rem, 4.2vw, 4.5rem);    /* section headline       */
+  --t-d3: clamp(1.6rem, 2.6vw, 2.75rem);    /* sub headline           */
+  --t-h1: clamp(1.35rem, 1.7vw, 1.85rem);   /* karta / panel titul    */
+  --t-h2: 1.125rem;
+  --t-body-l: 1.0625rem;
+  --t-body: 0.9375rem;
+  --t-sm:   0.8125rem;
+  --t-xs:   0.75rem;
+  --t-meta: 0.6875rem;                       /* nejmenší datový údaj  */
+
+  /* Verzálky nemají dolní dotažnice, řádky proto smí k sobě blíž.
+     Místo nad nimi ale musí zbýt na české háčky. */
+  --lh-display: 1.0;
+  --lh-tight:   1.15;
+  --lh-body:    1.6;
+
+  /* Avant Garde je klasicky sázená natěsno. */
+  --tr-display: -0.018em;
+  --tr-tight:   -0.01em;
+  --tr-meta:     0em;
+
+  /* ---------- SPACING / LAYOUT ------------------------------------------ */
+  /* 4px base. Full-bleed: žádný centrální container. */
+  --s-1:  4px;  --s-2:  8px;  --s-3: 12px; --s-4: 16px;
+  --s-5: 20px;  --s-6: 24px;  --s-8: 32px; --s-10: 40px;
+  --s-12: 48px; --s-16: 64px; --s-20: 80px; --s-24: 96px;
+  --s-32: 128px; --s-40: 160px;
+
+  --gutter: clamp(18px, 2.6vw, 56px);        /* vnitřní padding viewportu */
+  --section-y: clamp(72px, 9vh, 160px);      /* vertikální rytmus sekcí   */
+
+  --header-h: 60px;
+  --command-h: 72px;
+  --rail-h: 52px;
+  --chrome-h: calc(var(--header-h) + var(--command-h) + var(--rail-h));
+
+  /* ---------- RADIUS / ELEVATION ---------------------------------------- */
+  /* Konstrukce je hranatá — karty, panely, tlačítka, pole, tabulky.
+     Zaoblení zůstává výhradně štítkům, které leží nad obsahem
+     (stav projektu, Premium, developer na fotce, cenový marker v mapě).
+     Díky tomu čte oko zaoblený tvar jako „tohle je nálepka“, ne jako styl. */
+  --r-0: 0px;
+  --r-1: 0px;
+  --r-2: 0px;
+  --r-3: 0px;
+  --r-pill: 999px;   /* pouze štítky nad obsahem */
+
+  --sh-1: 0 1px 2px rgba(21, 23, 26, 0.05);
+  --sh-2: 0 2px 10px rgba(21, 23, 26, 0.07);
+  --sh-3: 0 12px 40px -12px rgba(21, 23, 26, 0.20);
+  --sh-4: 0 32px 80px -24px rgba(21, 23, 26, 0.30);
+
+  /* ---------- MOTION ----------------------------------------------------- */
+  --e-out:   cubic-bezier(0.22, 1, 0.36, 1);      /* standard exit/enter   */
+  --e-inout: cubic-bezier(0.65, 0, 0.35, 1);      /* state morph           */
+  --e-snap:  cubic-bezier(0.34, 1.36, 0.64, 1);   /* micro, velmi jemný    */
+
+  --d-micro: 160ms;   /* hover, focus, toggle      */
+  --d-ui:    280ms;   /* panely, dropdowny         */
+  --d-view:  560ms;   /* view morph, map/grid      */
+  --d-reveal: 900ms;  /* scroll reveal             */
+
+  --z-map: 1;
+  --z-map-ui: 20;
+  --z-panel: 60;
+  --z-header: 80;
+  --z-overlay: 100;
+  --z-toast: 120;
+
+  color-scheme: light;
+}
+
+/* ==========================================================================
+   DARK — samostatný vizuální jazyk, ne inverze.
+   Papír se mění na uhel, akcent se zesvětluje (kontrast), mapa se přelaďuje
+   do studeného grafitu, linky získávají teplo, aby plochy nebyly ploché.
+   ========================================================================== */
+:root[data-theme="dark"] {
+  --paper:        #0F0C0A;
+  --paper-2:      #16120E;
+  --surface:      #1A1613;
+  --surface-2:    #231E19;
+  --surface-inv:  #F2EDE6;
+
+  --ink:          #EFE9E1;
+  --ink-70:       #ADA298;
+  --ink-45:       #8D8377;
+  --ink-25:       #514840;
+  --ink-inv:      #1A1613;
+
+  --line:         rgba(239, 233, 225, 0.13);
+  --line-strong:  rgba(239, 233, 225, 0.26);
+  --line-soft:    rgba(239, 233, 225, 0.06);
+
+  /* V tmavém režimu se akcent obrací — písková hnědá na uhlu (8,6:1). */
+  --accent:       #C9A98F;
+  --accent-ink:   #17120E;
+  --accent-soft:  rgba(201, 169, 143, 0.14);
+  --accent-line:  rgba(201, 169, 143, 0.42);
+
+  --clay:         #BE9E8C;
+  --clay-soft:    rgba(190, 158, 140, 0.16);
+
+  --st-planned:   #9C9289;
+  --st-presale:   #D0A051;
+  --st-selling:   #63A87C;
+  --st-done:      #A79B8E;
+  --st-sold:      #C8837A;
+
+  --map-ground:   #16120E;
+  --map-water:    #1A1A18;
+  --map-green:    #181611;
+  --map-built:    #1D1915;
+  --map-road:     #2A2420;
+  --map-road-2:   #201C18;
+  --map-boundary: rgba(239, 233, 225, 0.16);
+  --map-label:    #948878;
+  --map-label-halo: rgba(13, 10, 8, 0.9);
+
+  --sh-1: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --sh-2: 0 2px 12px rgba(0, 0, 0, 0.45);
+  --sh-3: 0 12px 40px -12px rgba(0, 0, 0, 0.7);
+  --sh-4: 0 32px 80px -24px rgba(0, 0, 0, 0.8);
+
+  color-scheme: dark;
+}

@@ -1,0 +1,605 @@
+/* ==========================================================================
+   URBANMAP — APP SHELL (mapový explorer, search, filtry, panely)
+   Toto je jádro produktu. Mapa je primární plocha, ne ilustrace.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. COMMAND BAR — hlavní akce: hledat
+   -------------------------------------------------------------------------- */
+.command {
+  position: sticky; top: var(--header-h); z-index: calc(var(--z-header) - 1);
+  height: var(--command-h);
+  display: flex; align-items: center; gap: var(--s-4);
+  padding-inline: var(--gutter);
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+}
+
+/* Search trigger — vypadá jako pole, chová se jako tlačítko do overlaye. */
+.search-trigger {
+  flex: 1 1 auto; min-width: 0;
+  display: flex; align-items: center; gap: var(--s-3);
+  height: 44px; padding-inline: 14px;
+  background: var(--surface); border: 1px solid var(--line-strong);
+  border-radius: var(--r-2);
+  color: var(--ink-45); font-size: var(--t-body);
+  text-align: left;
+  transition: border-color var(--d-micro), background-color var(--d-micro), box-shadow var(--d-micro);
+}
+.search-trigger:hover { border-color: var(--ink-45); }
+.search-trigger:focus-visible { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); outline: none; }
+.search-trigger svg { flex: none; opacity: .55; }
+.search-trigger span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.search-trigger .kbd { margin-left: auto; flex: none; }
+
+.command__quick { display: flex; gap: 6px; flex: none; }
+@media (max-width: 1180px) { .command__quick { display: none; } }
+
+.command__right { display: flex; align-items: center; gap: var(--s-3); flex: none; }
+
+/* --------------------------------------------------------------------------
+   2. FILTER RAIL
+   -------------------------------------------------------------------------- */
+/* Filtry jsou hlavní konkurenční výhoda — musí zůstat na dosah i po scrollu
+   do mřížky, ne jen na první obrazovce. */
+.rail-wrap {
+  position: sticky; top: calc(var(--header-h) + var(--command-h));
+  z-index: calc(var(--z-header) - 2);
+}
+.rail {
+  position: relative; z-index: calc(var(--z-header) - 2);
+  height: var(--rail-h);
+  display: flex; align-items: center; gap: var(--s-2);
+  padding-inline: var(--gutter);
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+  overflow-x: auto; overflow-y: hidden;
+  scrollbar-width: none;
+}
+.rail::-webkit-scrollbar { display: none; }
+
+.fbtn {
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 32px; padding-inline: 12px;
+  font-size: var(--t-sm); color: var(--ink-70);
+  border: 1px solid transparent; border-radius: var(--r-2);
+  white-space: nowrap; flex: none;
+  transition: background-color var(--d-micro), color var(--d-micro), border-color var(--d-micro);
+}
+.fbtn:hover { background: var(--line-soft); color: var(--ink); }
+.fbtn svg { opacity: .45; transition: transform var(--d-micro) var(--e-out); }
+.fbtn[aria-expanded="true"] { background: var(--line-soft); color: var(--ink); border-color: var(--line); }
+.fbtn[aria-expanded="true"] svg { transform: rotate(180deg); }
+.fbtn.has-value { color: var(--ink); border-color: var(--ink); background: var(--surface); }
+/* Aktivní filtr poznáme podle rámečku a barvy textu, ne podle puntíku. */
+.fbtn.has-value { color: var(--accent); border-color: var(--accent-line); }
+.fbtn__dot { display: none; }
+.rail__sep { width: 1px; height: 20px; background: var(--line); flex: none; margin-inline: var(--s-2); }
+.rail__reset { margin-left: auto; flex: none; }
+
+/* --------------------------------------------------------------------------
+   3. FILTER PANEL — velký overlay pod railem, ne malý dropdown
+   -------------------------------------------------------------------------- */
+.fpanel {
+  position: absolute; top: 100%; left: 0; right: 0;
+  z-index: var(--z-panel);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+  box-shadow: var(--sh-3);
+  display: none;
+  max-height: min(64vh, 620px); overflow-y: auto;
+}
+.fpanel.is-open { display: block; animation: fpanel-in var(--d-ui) var(--e-out); }
+@keyframes fpanel-in {
+  from { opacity: 0; transform: translate3d(0, -10px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+.fpanel__inner {
+  padding: clamp(24px, 3vw, 44px) var(--gutter);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+  gap: clamp(24px, 3vw, 56px);
+}
+.fpanel__foot {
+  position: sticky; bottom: 0;
+  display: flex; align-items: center; gap: var(--s-4);
+  padding: var(--s-4) var(--gutter);
+  background: var(--surface-2);
+  border-top: 1px solid var(--line);
+}
+.fgroup { display: flex; flex-direction: column; gap: var(--s-4); min-width: 0; }
+.fgroup__title {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s-4);
+  padding-bottom: var(--s-3); border-bottom: 1px solid var(--line);
+}
+.fgroup__chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.fgroup__note { font-size: var(--t-xs); color: var(--ink-45); line-height: 1.45; }
+
+/* Cenový rozsah — dvojitý slider */
+.range { display: flex; flex-direction: column; gap: var(--s-4); }
+.range__vals { display: flex; align-items: baseline; justify-content: space-between; }
+.range__vals b { font-family: var(--font-mono); font-size: var(--t-body); font-weight: var(--fw-med); }
+.range__track { position: relative; height: 34px; }
+.range__rail { position: absolute; top: 15px; left: 0; right: 0; height: 3px; background: var(--line); }
+.range__fill { position: absolute; top: 15px; height: 3px; background: var(--ink); }
+.range input[type="range"] {
+  position: absolute; top: 0; left: 0; width: 100%; height: 34px;
+  -webkit-appearance: none; appearance: none;
+  background: none; pointer-events: none;
+}
+.range input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; pointer-events: auto;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--surface-2); border: 2px solid var(--ink);
+  box-shadow: var(--sh-2); cursor: grab;
+}
+.range input[type="range"]::-moz-range-thumb {
+  pointer-events: auto;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--surface-2); border: 2px solid var(--ink);
+  box-shadow: var(--sh-2); cursor: grab;
+}
+/* Histogram rozložení cen — datová vrstva ve filtru */
+.range__hist { display: flex; align-items: flex-end; gap: 2px; height: 34px; margin-bottom: -6px; }
+.range__hist i { flex: 1; background: var(--line); transition: background-color var(--d-micro); }
+.range__hist i.in { background: var(--ink-25); }
+
+/* --------------------------------------------------------------------------
+   4. EXPLORER SHELL — mapa + výsledky
+   -------------------------------------------------------------------------- */
+.explorer {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--map-col, 62fr) minmax(0, 38fr);
+  grid-template-rows: minmax(0, 1fr);
+  height: calc(100dvh - var(--chrome-h));
+  min-height: 520px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--line);
+  transition: grid-template-columns var(--d-view) var(--e-inout);
+}
+.explorer.is-fullscreen {
+  position: fixed; inset: 0; z-index: var(--z-overlay);
+  height: 100dvh; border: none;
+}
+
+/* MAPA ---------------------------------------------------------------------*/
+.explorer > * { min-width: 0; min-height: 0; }
+
+.mapwrap { position: relative; overflow: hidden; background: var(--map-ground); }
+.map { position: absolute; inset: 0; }
+/* Vlastní chrome mapové knihovny dorovnáváme na hranatý tvar zbytku UI. */
+.maplibregl-ctrl-attrib { font-size: 9px !important; opacity: .5; }
+.maplibregl-ctrl-attrib,
+.maplibregl-ctrl-attrib-button,
+.maplibregl-ctrl button { border-radius: 0 !important; }
+.maplibregl-ctrl-bottom-left, .maplibregl-ctrl-bottom-right { z-index: 4 !important; }
+
+/* Fallback, když se mapová knihovna nenačte (offline) */
+.map-fallback {
+  position: absolute; inset: 0; z-index: 2;
+  display: none; place-items: center;
+  background: var(--map-ground);
+}
+.map-fallback.is-on { display: grid; }
+.map-fallback__svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.map-fallback__note {
+  position: relative; z-index: 2;
+  max-width: 320px; text-align: center; padding: var(--s-5);
+  background: var(--surface-2); border: 1px solid var(--line); box-shadow: var(--sh-2);
+}
+
+/* Mapová UI vrstva */
+.map-ui {
+  position: absolute; inset: 0; z-index: var(--z-map-ui);
+  pointer-events: none;
+  display: flex; flex-direction: column; justify-content: space-between;
+  padding: var(--s-4);
+}
+.map-ui > * { pointer-events: auto; }
+.map-ui__top { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s-3); }
+.map-ui__bottom { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--s-3); }
+
+.mtool {
+  display: flex; flex-direction: column;
+  background: var(--surface-2); border: 1px solid var(--line);
+  box-shadow: var(--sh-2); border-radius: var(--r-2); overflow: hidden;
+}
+.mtool--row { flex-direction: row; }
+.mtool button {
+  width: 36px; height: 36px; display: grid; place-items: center;
+  color: var(--ink-70);
+  transition: background-color var(--d-micro), color var(--d-micro);
+}
+.mtool button + button { border-top: 1px solid var(--line); }
+.mtool--row button + button { border-top: none; border-left: 1px solid var(--line); }
+.mtool button:hover { background: var(--line-soft); color: var(--ink); }
+.mtool button.is-on { background: var(--ink); color: var(--paper); }
+.mtool button[data-wide] { width: auto; padding-inline: 12px; gap: 7px; font-size: var(--t-xs); }
+
+/* Přepínač datových vrstev */
+.layers {
+  width: 232px; padding: var(--s-3);
+  background: var(--surface-2); border: 1px solid var(--line);
+  box-shadow: var(--sh-3); border-radius: var(--r-2);
+  display: none;
+}
+.layers.is-open { display: block; animation: fpanel-in 200ms var(--e-out); }
+.layers h5 {
+  margin: 0 0 var(--s-3); padding: 2px 8px;
+  font-family: var(--font-sans); font-size: var(--t-xs); font-weight: 500; color: var(--ink-45);
+}
+.layers label {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px; font-size: var(--t-sm); color: var(--ink-70);
+  cursor: pointer; border-radius: var(--r-1);
+  transition: background-color var(--d-micro), color var(--d-micro);
+}
+.layers label:hover { background: var(--line-soft); color: var(--ink); }
+.layers label input { accent-color: var(--accent); width: 14px; height: 14px; }
+.layers label.is-soon { opacity: .42; cursor: not-allowed; }
+.layers label .tag {
+  margin-left: auto; font-family: var(--font-sans); font-size: 11px; color: var(--ink-45);
+}
+
+/* Kreslení oblasti */
+.draw-layer {
+  position: absolute; inset: 0; z-index: calc(var(--z-map-ui) - 2);
+  display: none; touch-action: none;
+}
+.draw-layer.is-armed { display: block; cursor: crosshair; }
+.draw-rect {
+  position: absolute;
+  background: var(--accent-soft);
+  border: 1.5px dashed var(--accent);
+  border-radius: var(--r-1);
+  pointer-events: none;
+}
+
+/* Scroll-zoom gate — mapa nesmí ukrást scroll stránky */
+.map-gate {
+  position: absolute; inset: 0; z-index: calc(var(--z-map-ui) - 1);
+  display: grid; place-items: center;
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  opacity: 0; visibility: hidden;
+  transition: opacity 200ms var(--e-out), visibility 200ms;
+}
+.map-gate.is-visible { opacity: 1; visibility: visible; }
+
+/* --------------------------------------------------------------------------
+   5. MAPOVÉ MARKERY — HTML, plně v brandu
+   -------------------------------------------------------------------------- */
+.mk { cursor: pointer; will-change: transform; }
+
+/* Cenový marker projektu */
+.mk-pin {
+  display: flex; align-items: center;
+  height: 28px; padding: 0 11px;
+  background: var(--surface-2);
+  /* Stav nese barva ceny — marker tak zůstane bez další značky navíc. */
+  color: var(--st-color, var(--ink));
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  box-shadow: var(--sh-2);
+  font-family: var(--font-sans); font-size: 12px; font-weight: 500;
+  letter-spacing: -0.012em;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+  transform-origin: center bottom;
+  transition: background-color 180ms var(--e-out), color 180ms var(--e-out),
+              border-color 180ms var(--e-out), transform 220ms var(--e-snap),
+              box-shadow 180ms var(--e-out);
+}
+.mk:hover .mk-pin { transform: scale(1.07) translateY(-2px); box-shadow: var(--sh-3); border-color: var(--ink); z-index: 3; }
+.mk.is-active .mk-pin {
+  background: var(--ink); color: var(--paper); border-color: var(--ink);
+  transform: scale(1.1) translateY(-3px); box-shadow: var(--sh-3);
+}
+.mk.is-dim .mk-pin { opacity: .34; }
+
+/* Featured projekt dostane výraznější marker (premium listing) */
+.mk-pin.is-feature { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft), var(--sh-2); }
+
+/* Cluster */
+.mk-cluster {
+  display: grid; place-items: center;
+  width: var(--cs, 44px); height: var(--cs, 44px);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--surface-2) 92%, transparent);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--sh-2);
+  font-family: var(--font-mono); font-size: 12px; font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  transition: transform 240ms var(--e-snap), background-color 180ms, color 180ms;
+}
+.mk-cluster::after {
+  content: ""; position: absolute; inset: -6px; border-radius: 50%;
+  border: 1px solid var(--line); opacity: .55;
+}
+.mk:hover .mk-cluster { transform: scale(1.09); background: var(--ink); color: var(--paper); }
+
+/* Hover preview nad markerem */
+.mk-peek {
+  position: absolute; bottom: calc(100% + 12px); left: 50%;
+  width: 236px; margin-left: -118px;
+  background: var(--surface-2); border: 1px solid var(--line);
+  box-shadow: var(--sh-3); border-radius: var(--r-2); overflow: hidden;
+  opacity: 0; transform: translate3d(0, 6px, 0) scale(.97); transform-origin: bottom center;
+  transition: opacity 180ms var(--e-out), transform 220ms var(--e-out);
+  pointer-events: none;
+}
+.mk-peek.is-on { opacity: 1; transform: none; }
+.mk-peek__img { aspect-ratio: 16/9; background: var(--paper-2); }
+.mk-peek__img img { width: 100%; height: 100%; object-fit: cover; }
+.mk-peek__body { padding: 10px 12px 12px; }
+.mk-peek__name { font-size: var(--t-sm); font-weight: 500; letter-spacing: -0.012em; }
+.mk-peek__row { display: flex; align-items: baseline; justify-content: space-between; margin-top: 7px; }
+
+/* --------------------------------------------------------------------------
+   6. RESULTS RAIL
+   -------------------------------------------------------------------------- */
+.results {
+  display: flex; flex-direction: column; min-width: 0;
+  background: var(--paper);
+  border-left: 1px solid var(--line);
+}
+.results__head {
+  flex: none;
+  display: flex; align-items: center; gap: var(--s-4);
+  padding: var(--s-4) var(--s-5);
+  border-bottom: 1px solid var(--line);
+}
+.results__count { font-size: var(--t-sm); }
+.results__count b { font-family: var(--font-mono); font-weight: var(--fw-med); }
+.results__body { flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain; }
+.results__inner {
+  padding: var(--s-5);
+  display: grid; gap: var(--s-5) var(--s-3);
+  grid-template-columns: repeat(auto-fit, minmax(min(228px, 100%), 1fr));
+  align-content: start;
+}
+
+.results__empty { padding: var(--s-16) var(--s-6); text-align: center; }
+
+/* Karta v railu reaguje na hover s mapou */
+.pcard.is-hi .pcard__frame { box-shadow: 0 0 0 2px var(--ink); }
+.pcard.is-hi .pcard__name { color: var(--accent); }
+
+/* Select / sort */
+.sel {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 30px; padding-inline: 9px;
+  font-size: var(--t-xs); color: var(--ink-70);
+  border: 1px solid var(--line); border-radius: var(--r-2);
+  background: var(--surface);
+  transition: border-color var(--d-micro), color var(--d-micro);
+}
+.sel:hover { border-color: var(--line-strong); color: var(--ink); }
+.sel select {
+  appearance: none; -webkit-appearance: none;
+  background: none; border: none; font-size: inherit; color: inherit;
+  padding-right: 2px; cursor: pointer;
+}
+
+/* --------------------------------------------------------------------------
+   7. VIEW MODES — MAPA / MŘÍŽKA / SEZNAM
+   -------------------------------------------------------------------------- */
+.explorer[data-view="grid"], .explorer[data-view="list"] {
+  --map-col: 0fr;
+  grid-template-rows: auto;
+  height: auto; min-height: calc(100dvh - var(--chrome-h));
+  overflow: visible;
+}
+.explorer[data-view="grid"] .mapwrap,
+.explorer[data-view="list"] .mapwrap { opacity: 0; pointer-events: none; }
+.mapwrap { transition: opacity var(--d-view) var(--e-inout); }
+
+.explorer[data-view="grid"] .results,
+.explorer[data-view="list"] .results { border-left: none; }
+.explorer[data-view="grid"] .results__body,
+.explorer[data-view="list"] .results__body { overflow: visible; }
+.explorer[data-view="grid"] .results__inner {
+  padding: var(--s-8) var(--gutter) var(--s-20);
+  grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr));
+  gap: clamp(20px, 2vw, 40px);
+}
+.explorer[data-view="list"] .results__inner {
+  display: block; padding: var(--s-6) var(--gutter) var(--s-20);
+}
+.explorer[data-view="list"] .pcard { display: none; }
+.explorer[data-view="list"] .lrow { display: grid; }
+.lrow { display: none; }
+.explorer[data-view="map"] .pcard--feature,
+.explorer[data-view="list"] .pcard--feature { grid-column: auto; }
+.explorer[data-view="map"] .pcard--feature .pcard__frame { aspect-ratio: 4/3; }
+.explorer[data-view="map"] .pcard--feature .pcard__name { font-size: var(--t-h1); }
+
+/* Stagger při přepnutí view */
+.results__inner.is-morphing > * {
+  animation: card-in 520ms var(--e-out) backwards;
+  animation-delay: calc(var(--i, 0) * 26ms);
+}
+@keyframes card-in {
+  from { opacity: 0; transform: translate3d(0, 22px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* --------------------------------------------------------------------------
+   8. PROJECT PREVIEW PANEL
+   -------------------------------------------------------------------------- */
+.preview {
+  position: absolute; top: 0; left: 0; bottom: 0; z-index: var(--z-panel);
+  width: min(392px, 86%);
+  background: var(--surface-2);
+  border-right: 1px solid var(--line);
+  box-shadow: var(--sh-4);
+  display: flex; flex-direction: column;
+  transform: translate3d(-102%, 0, 0);
+  visibility: hidden;
+  transition: transform 460ms var(--e-out), visibility 460ms;
+}
+.preview.is-open { transform: none; visibility: visible; }
+.preview__media { position: relative; flex: none; aspect-ratio: 16/10; background: var(--paper-2); overflow: hidden; }
+.preview__media img { width: 100%; height: 100%; object-fit: cover; }
+.preview__close {
+  position: absolute; top: 12px; right: 12px;
+  width: 32px; height: 32px; display: grid; place-items: center;
+  background: var(--surface-2); box-shadow: var(--sh-2);
+  color: var(--ink);
+  transition: transform var(--d-micro) var(--e-out);
+}
+.preview__close:hover { transform: rotate(90deg); }
+.preview__nav {
+  position: absolute; bottom: 12px; left: 12px;
+  display: flex; gap: 4px;
+}
+.preview__nav i { width: 18px; height: 2px; background: rgba(255,255,255,.45); }
+.preview__nav i.on { background: #fff; }
+.preview__body { flex: 1 1 auto; overflow-y: auto; padding: var(--s-5); }
+.preview__foot {
+  flex: none; display: flex; gap: var(--s-3);
+  padding: var(--s-4) var(--s-5);
+  border-top: 1px solid var(--line); background: var(--surface-2);
+}
+.kv { display: grid; grid-template-columns: auto 1fr; gap: var(--s-3) var(--s-5); align-items: baseline; }
+.kv dt { font-size: var(--t-xs); font-weight: 500; color: var(--ink-45); }
+.kv dd { margin: 0; font-size: var(--t-sm); text-align: right; }
+
+/* --------------------------------------------------------------------------
+   9. SEARCH OVERLAY — command center
+   -------------------------------------------------------------------------- */
+.sheet {
+  position: fixed; inset: 0; z-index: var(--z-overlay);
+  display: flex; flex-direction: column; align-items: center;
+  padding-top: clamp(56px, 11vh, 140px);
+  background: color-mix(in srgb, var(--paper) 58%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(130%); backdrop-filter: blur(14px) saturate(130%);
+  opacity: 0; visibility: hidden;
+  transition: opacity 260ms var(--e-out), visibility 260ms;
+}
+.sheet.is-open { opacity: 1; visibility: visible; }
+
+.cmd {
+  width: min(880px, calc(100% - 2 * var(--gutter)));
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  box-shadow: var(--sh-4);
+  border-radius: var(--r-3);
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  max-height: min(680px, 76vh);
+  transform: translate3d(0, -14px, 0) scale(.985);
+  transition: transform 320ms var(--e-out);
+}
+.sheet.is-open .cmd { transform: none; }
+
+.cmd__field {
+  flex: none; display: flex; align-items: center; gap: var(--s-4);
+  padding: var(--s-5) var(--s-6);
+  border-bottom: 1px solid var(--line);
+}
+.cmd__field svg { flex: none; opacity: .45; }
+.cmd__field input {
+  flex: 1; min-width: 0;
+  font-size: clamp(1.0625rem, 1.4vw, 1.375rem);
+  letter-spacing: -0.02em; font-weight: 500;
+  outline: none;
+}
+.cmd__field input::placeholder { color: var(--ink-25); }
+
+.cmd__body { flex: 1 1 auto; overflow-y: auto; padding: var(--s-3) 0 var(--s-4); }
+.cmd__group { padding: var(--s-3) 0; }
+.cmd__group + .cmd__group { border-top: 1px solid var(--line-soft); }
+.cmd__label {
+  padding: var(--s-2) var(--s-6) var(--s-3);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.cmd__item {
+  display: flex; align-items: center; gap: var(--s-4);
+  width: 100%; padding: 10px var(--s-6);
+  text-align: left;
+  transition: background-color 120ms;
+}
+.cmd__item:hover, .cmd__item.is-cursor { background: var(--line-soft); }
+.cmd__item.is-cursor { box-shadow: inset 2px 0 0 var(--accent); }
+.cmd__ico {
+  width: 32px; height: 32px; flex: none; display: grid; place-items: center;
+  border: 1px solid var(--line); border-radius: var(--r-2);
+  color: var(--ink-45); background: var(--surface);
+  overflow: hidden;
+}
+.cmd__ico img { width: 100%; height: 100%; object-fit: cover; }
+.cmd__txt { min-width: 0; flex: 1; }
+.cmd__t { font-size: var(--t-body); letter-spacing: -0.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmd__t mark { background: none; color: var(--accent); font-weight: 600; }
+.cmd__s { font-size: var(--t-xs); font-weight: 500; color: var(--ink-45); margin-top: 4px; }
+.cmd__meta { flex: none; font-size: var(--t-xs); color: var(--ink-45); font-variant-numeric: tabular-nums; }
+.cmd__foot {
+  flex: none; display: flex; align-items: center; gap: var(--s-5);
+  padding: var(--s-3) var(--s-6);
+  border-top: 1px solid var(--line); background: var(--surface);
+  font-size: var(--t-xs); color: var(--ink-45);
+}
+.cmd__foot span { display: inline-flex; align-items: center; gap: 6px; }
+
+/* --------------------------------------------------------------------------
+   10. RESPONSIVE — tablet: mapa + výsledky; mobil: search-first
+   -------------------------------------------------------------------------- */
+@media (max-width: 1280px) {
+  .explorer { --map-col: 54fr; }
+}
+
+@media (max-width: 1024px) {
+  :root { --command-h: 64px; }
+  .explorer {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(280px, 42vh) auto;
+    height: auto; overflow: visible;
+  }
+  .results { border-left: none; border-top: 1px solid var(--line); }
+  .results__body { overflow: visible; }
+  .explorer[data-view="grid"] .mapwrap, .explorer[data-view="list"] .mapwrap { display: none; }
+  .explorer[data-view="grid"], .explorer[data-view="list"] { grid-template-rows: 1fr; }
+  .preview { width: 100%; }
+}
+
+@media (max-width: 720px) {
+  :root { --header-h: 56px; --command-h: 60px; --rail-h: 48px; }
+  .header { gap: var(--s-3); }
+  .nav, .command__quick { display: none; }
+  /* Mobil je search-first: v horní liště zůstává jen hledání,
+     přepínač mapa/seznam se přesune do plovoucího ovládání dole. */
+  .command { gap: var(--s-2); }
+  .command__right { display: none; }
+  .search-trigger .kbd { display: none; }
+  .header .btn--ghost { display: none; }
+  .results__head { flex-wrap: wrap; row-gap: var(--s-3); }
+  .mobile-toggle { bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+  .explorer { grid-template-rows: minmax(240px, 38vh) auto; }
+  .results__inner { grid-template-columns: 1fr; padding: var(--s-4); }
+  .explorer[data-view="grid"] .results__inner { padding: var(--s-5) var(--gutter) var(--s-16); grid-template-columns: 1fr; }
+
+  /* Preview jako bottom sheet */
+  .preview {
+    top: auto; left: 0; right: 0; bottom: 0;
+    width: 100%; max-height: 82dvh;
+    border-right: none; border-top: 1px solid var(--line);
+    border-radius: var(--r-3) var(--r-3) 0 0;
+    transform: translate3d(0, 102%, 0);
+  }
+  .preview__media { aspect-ratio: 16/9; }
+  .sheet { padding-top: 0; }
+  .cmd { width: 100%; height: 100dvh; max-height: none; border-radius: 0; border: none; }
+  .cmd__foot { display: none; }
+}
+
+/* Mobilní plovoucí přepínač mapa/seznam */
+.mobile-toggle {
+  display: none;
+  position: fixed; left: 50%; bottom: 20px; z-index: var(--z-panel);
+  transform: translateX(-50%);
+}
+@media (max-width: 720px) {
+  .mobile-toggle { display: block; }
+  .mobile-toggle .seg { background: var(--surface-2); box-shadow: var(--sh-3); border-color: var(--line-strong); }
+}

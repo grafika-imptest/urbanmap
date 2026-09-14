@@ -1,0 +1,17 @@
+# Podklady k zadání — vstupní materiály, ne součást produktu (14 MB screenshotů + brief)
+assets/podklady_prompt/
+
+# Vendorované skills třetích stran, taháno přes `npx skills add`
+.agents/
+
+# OS / editor
+Thumbs.db
+desktop.ini
+.DS_Store
+*.swp
+.vscode/
+.idea/
+node_modules/
+
+# Vendorované skills i pod .claude/
+.claude/skills/
