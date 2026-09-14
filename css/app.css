@@ -274,7 +274,8 @@
 /* Cenový marker projektu */
 .mk-pin {
   display: flex; align-items: center;
-  height: 28px; padding: 0 11px;
+  position: relative;
+  height: 28px; padding: 0 12px 0 23px;
   background: var(--surface-2);
   /* Stav nese barva ceny — marker tak zůstane bez další značky navíc. */
   color: var(--st-color, var(--ink));
@@ -289,6 +290,22 @@
               border-color 180ms var(--e-out), transform 220ms var(--e-snap),
               box-shadow 180ms var(--e-out);
 }
+/* Štít ze značky. Vyřezává se ze sprite s velkým průhledným okrajem —
+   proto ta nekulatá čísla: v podkladu 377 × 315 leží štít i se stínem
+   na 134,55 o rozměru 107 × 128. Odtud background-size 377/107 a 315/128
+   a pozice 134/(377-107) a 55/(315-128). Kdyby obrázek někdo vyměnil za
+   oříznutý, stačí tu nechat contain a center. */
+.mk-pin__mark {
+  position: absolute; left: -10px; top: 50%;
+  width: 28px; aspect-ratio: 107 / 128;
+  transform: translateY(-50%);
+  background-image: url("../assets/img/symbol_map@4x-8.png");
+  background-repeat: no-repeat;
+  background-size: 352.3% 246.1%;
+  background-position: 49.63% 29.41%;
+  pointer-events: none;
+}
+
 .mk:hover .mk-pin { transform: scale(1.07) translateY(-2px); box-shadow: var(--sh-3); border-color: var(--ink); z-index: 3; }
 .mk.is-active .mk-pin {
   background: var(--ink); color: var(--paper); border-color: var(--ink);

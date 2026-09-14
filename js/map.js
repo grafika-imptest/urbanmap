@@ -312,7 +312,8 @@
           node.className = 'mk' + (active ? ' is-active' : '');
           node.innerHTML =
             '<div class="mk-pin' + (p.featured ? ' is-feature' : '') + '" data-status="' + p.status + '">' +
-              (p.label || '') +
+              '<i class="mk-pin__mark" aria-hidden="true"></i>' +
+              '<span class="mk-pin__label">' + (p.label || '') + '</span>' +
             '</div>' +
             '<div class="mk-peek"></div>';
 
