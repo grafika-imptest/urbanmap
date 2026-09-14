@@ -286,6 +286,30 @@
 }
 
 /* --------------------------------------------------------------------------
+   VODOZNAK — samotný štít značky jako tichá plocha v pozadí sekce.
+   Leží v toku jako první dítě a obsah nad ním je `position: relative`;
+   pořadí v DOM tak rozhoduje o překrytí a nepotřebujeme záporný z-index,
+   který by u sekce s vlastním pozadím propadl pod něj.
+   -------------------------------------------------------------------------- */
+.section--mark { position: relative; overflow: hidden; }
+.section--mark > *:not(.watermark) { position: relative; }
+.watermark {
+  position: absolute;
+  /* Štít vybíhá za pravý okraj — vodoznak, ne ilustrace na ploše. */
+  right: -4vw;
+  top: 48%;
+  width: min(21vw, 294px);
+  aspect-ratio: 15.38 / 20.08;
+  background: url("../assets/img/symbol_urbanmap.svg") center / contain no-repeat;
+  opacity: 0.08;
+  transform: translate3d(0, calc(-50% + var(--px, 0px)), 0);
+  will-change: transform;
+  pointer-events: none;
+}
+/* V úzkém layoutu by se štít pral s textem o stejné místo. */
+@media (max-width: 900px) { .watermark { display: none; } }
+
+/* --------------------------------------------------------------------------
    CTA HERO — vrstvená panoramatická kompozice
    Tři vrstvy: obloha vzadu, nadpis, silueta zástavby vepředu. Obě fotografie
    jsou tentýž snímek ve shodném rozlišení, jen z jednoho je odmazaná obloha —
@@ -298,9 +322,18 @@
 .cta-hero {
   position: relative;
   overflow: hidden;
-  /* Panorama je vysoké 1/2,74 šířky okna. Sekce proto roste s šířkou,
-     aby nad ním vždy zbyl pás oblohy pro nadpis. */
-  min-height: max(clamp(520px, 78vh, 900px), calc(36.5vw + 330px));
+  /* Panorama je vysoké 1/1,541 šířky okna, tedy 64,9 vw. Sekce roste
+     s šířkou, aby se mapa v obloze vešla skoro celá — 60 vw ji ořízne
+     nanejvýš o pár desítek pixelů shora, kde je stejně jen zahraničí. */
+  min-height: max(clamp(560px, 80vh, 940px), calc(60vw + 40px));
+  /* Stupeň písma nadpisu je zároveň měřítko, o kolik se poslední řádek
+     zanoří za dům — proto žije tady, ne až u .cta-hero__title. */
+  --cta-fs: clamp(2.2rem, 5.7vw, 6.5rem);
+  /* Hřeben nejvyššího domu v pásu, kde leží slovo MAPU (vodorovně 43–57 %
+     rámu). Změřeno z alfa kanálu výřezu: silueta tam kryje 60 % pásu
+     v 61,2 % výšky snímku, což je 25,2 vw nad jeho patou. Pata leží 30 px
+     pod spodní hranou sekce, viz odsazení .cta-hero__scene. */
+  --roofline: calc(25.2vw - 30px);
   display: grid;
   align-content: start;
   padding-bottom: clamp(40px, 6vh, 80px);
@@ -320,7 +353,7 @@
    na výšku sekce znamenalo, že jedna budova zabrala celý rám a nadpis
    za ní zmizel. */
 .cta-hero__scene img { display: block; width: 100%; height: auto; }
-.cta-hero__scene--fg { z-index: 4; }
+.cta-hero__scene--fg { z-index: 5; }
 
 /* Horní hrana ostré fotografie se rozplyne do rozostřeného podkladu,
    takže na přechodu není vidět šev. Siluetu popředí maskovat nesmíme. */
@@ -348,14 +381,49 @@
     transparent 64%);
 }
 
+/* Špendlíky. Vlastní vrstva, ne potomek `.cta-hero__scene`: musí ležet nad
+   projasněním oblohy, jinak by je scrim v horní třetině vybledlil o 46 %.
+   Rám si drží poměrem stran, takže procentní souřadnice sedí na fotografii
+   i bez vlastního obrázku. */
+.cta-hero__pins {
+  position: absolute; left: 0; right: 0; bottom: -30px; z-index: 3;
+  aspect-ratio: 3072 / 1994;
+  pointer-events: none;
+  transform: translate3d(0, var(--px, 0), 0);
+  will-change: transform;
+}
+.cta-pin { position: absolute; left: var(--x); top: var(--y); }
+/* Hrot štítu leží v 49 % výšky podkladu (zbytek je stín a průhledný okraj),
+   proto se vrstva posouvá o tolik, ne o polovinu. */
+.cta-pin > i {
+  display: block;
+  width: clamp(72px, 6.6vw, 150px);
+  aspect-ratio: 380 / 326;
+  margin-left: -50%;
+  margin-top: -49%;
+  background: url("../assets/img/symbol_map@4x-8.png") center / contain no-repeat;
+}
+/* Špendlík nedosedá zdola jako ostatní reveal, ale shora — jako by na mapu
+   spadl. Doskok je lehce přepružený. */
+.js [data-reveal="pin"] { opacity: 0; transform: translate3d(0, -30px, 0) scale(0.7); }
+.js [data-reveal="pin"].is-in {
+  transition-duration: 620ms;
+  transition-timing-function: cubic-bezier(0.22, 1.4, 0.36, 1);
+}
+
 /* Typografická vrstva — jediná, která se vůči fotografii pohybuje. */
-/* Nadpis se váže ke spodní hraně sekce, ne k horní: rozhoduje, kde leží
-   střechy, a ty jsou dané výškou panoramatu (36,5 vw). Odsazení 24 vw + 40 px
-   posadí poslední řádek těsně nad linii, kde zástavba stoupá. */
+/* Nadpis se váže k hřebeni střechy, ne ke spodní hraně sekce — poslední
+   řádek se má za dům zanořit. Rozhoduje ale okamžik, kdy je sekce celá
+   v obraze, ne klidová poloha: text jede rychlostí -70, panorama +22,
+   takže se vůči sobě míjejí o -92·p. Při plném záběru je p zhruba -0,5,
+   tedy text leží o 46 px níž než v klidu. Klidově proto účaří sedí
+   0,16 em NAD hřebenem a teprve pohyb ho zanoří — při plném záběru mizí
+   spodní pětina verzálky, takže slovo zůstává čitelné. Při odjezdu sekce
+   nahoru se zase vynoří celé. */
 .cta-hero__type {
   position: absolute; left: 0; right: 0;
-  bottom: calc(24vw + 40px);
-  z-index: 3;
+  bottom: calc(var(--roofline) + 0.16 * var(--cta-fs));
+  z-index: 4;
   width: min(780px, 46vw);
   margin-inline: auto;
   text-align: center;
@@ -365,14 +433,14 @@
 .cta-hero__title {
   font-family: var(--font-display);
   font-weight: var(--fw-demi);
-  font-size: clamp(2.2rem, 5.7vw, 6.5rem);
+  font-size: var(--cta-fs);
   line-height: 0.98;
   letter-spacing: -0.03em;
   text-transform: uppercase;
 }
 
 .cta-hero__aside {
-  position: absolute; top: clamp(36px, 6vh, 88px); z-index: 5;
+  position: absolute; top: clamp(36px, 6vh, 88px); z-index: 6;
   width: min(260px, 22vw);
   transform: translate3d(0, var(--px, 0), 0);
 }
@@ -422,4 +490,6 @@
     height: clamp(200px, 42vw, 360px); margin-top: var(--s-8);
   }
   .cta-hero__scene--fg { display: none; }
+  /* V toku fotografie přetéká svůj box — procentní souřadnice by nesedly. */
+  .cta-hero__pins { display: none; }
 }

@@ -22,13 +22,13 @@
    smrskla na 1 px — přepínač tématu i burger prakticky zmizely. */
 .header .btn--icon { flex: none; }
 /* Značka je široká (poměr zhruba 6 : 1), na úzkých displejích se zmenší. */
-@media (max-width: 620px) { .header .wordmark { --logo-h: 26px; } }
+@media (max-width: 620px) { .header .wordmark { --logo-h: 18px; } }
 /* Na nejužších displejích nese „Přidat projekt“ zásuvka. */
 @media (max-width: 520px) { .header .btn--primary { display: none; } }
 
 /* Wordmark ---------------------------------------------------------------- */
 .wordmark { display: inline-flex; align-items: center; flex: none; }
-.wordmark img { display: block; height: var(--logo-h, 34px); width: auto; }
+.wordmark img { display: block; height: var(--logo-h, 24px); width: auto; }
 
 /* Dvě varianty souboru, ne filtr — značka je dvoubarevná a invert by
    posunul i hnědou. */

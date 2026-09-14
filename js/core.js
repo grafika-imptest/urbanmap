@@ -217,7 +217,7 @@
       '<div class="bleed">' +
         '<div class="footer__grid">' +
           '<div class="footer__col">' +
-            wordmark('42px') +
+            wordmark('29px') +
             '<p class="lead" style="margin-top:20px;max-width:38ch;font-size:var(--t-body)">' +
               'Mapově-datová platforma pro nové developerské projekty v České republice. ' +
               'Najděte nové bydlení nebo investiční příležitost podle lokality.</p>' +

@@ -185,7 +185,8 @@
      ================================================================== -->
 
 <!-- 01 · CO PLATFORMA VIDÍ -->
-<section class="section section--rule bleed" id="data">
+<section class="section section--rule section--mark bleed" id="data" data-px="1">
+  <div class="watermark" data-px-layer="-46" aria-hidden="true"></div>
   <div class="section-head">
     <div>
       <span class="section-index">Datová základna</span>
@@ -330,12 +331,26 @@
     </div>
   </div>
 
+  <!-- Špendlíky dosedají na mapu v obloze. Souřadnice jsou v procentech
+       rámu fotografie, ne sekce — vrstva proto drží stejnou geometrii
+       i stejnou rychlost jako panorama. -->
+  <div class="cta-hero__pins" data-px-layer="22" data-stagger="130" aria-hidden="true">
+    <span class="cta-pin" style="--x:65.5%;--y:53.7%"><i data-reveal="pin" title="Brno"></i></span>
+    <span class="cta-pin" style="--x:38.3%;--y:27%"><i data-reveal="pin" title="Praha"></i></span>
+    <span class="cta-pin" style="--x:86.9%;--y:34.8%"><i data-reveal="pin" title="Ostrava"></i></span>
+    <span class="cta-pin" style="--x:55.9%;--y:22.9%"><i data-reveal="pin" title="Hradec Králové"></i></span>
+    <span class="cta-pin" style="--x:24.6%;--y:37.4%"><i data-reveal="pin" title="Plzeň"></i></span>
+    <span class="cta-pin" style="--x:74.2%;--y:41.7%"><i data-reveal="pin" title="Olomouc"></i></span>
+    <span class="cta-pin" style="--x:38.4%;--y:59.3%"><i data-reveal="pin" title="České Budějovice"></i></span>
+    <span class="cta-pin" style="--x:18.4%;--y:22.2%"><i data-reveal="pin" title="Karlovy Vary"></i></span>
+  </div>
+
   <div class="cta-hero__type" data-px-layer="-70">
     <h2 class="cta-hero__title" data-split>Dostaňte projekt na mapu</h2>
   </div>
 
   <div class="cta-hero__scene cta-hero__scene--fg" data-px-layer="22" aria-hidden="true">
-    <img src="assets/img/panorama-znojmo/panorama_bez_oblohy.png" alt="" loading="lazy" decoding="async">
+    <img src="assets/img/panorama-znojmo/panorama_bez_oblohy.webp" alt="" loading="lazy" decoding="async">
   </div>
 </section>
 
