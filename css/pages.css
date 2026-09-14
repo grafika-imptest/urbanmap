@@ -328,7 +328,7 @@
   min-height: max(clamp(560px, 80vh, 940px), calc(60vw + 40px));
   /* Stupeň písma nadpisu je zároveň měřítko, o kolik se poslední řádek
      zanoří za dům — proto žije tady, ne až u .cta-hero__title. */
-  --cta-fs: clamp(2.6rem, 7vw, 8.5rem);
+  --cta-fs: clamp(3rem, 8.4vw, 10.5rem);
   /* Hřeben nejvyššího domu v pásu, kde leží slovo MAPU (vodorovně 43–57 %
      rámu). Změřeno z alfa kanálu výřezu: silueta tam kryje 60 % pásu
      v 61,2 % výšky snímku, což je 25,2 vw nad jeho patou. Pata leží 30 px
@@ -417,14 +417,14 @@
    v obraze, ne klidová poloha: text jede rychlostí -70, panorama +22,
    takže se vůči sobě míjejí o -92·p. Při plném záběru je p zhruba -0,5,
    tedy text leží o 46 px níž než v klidu. Klidově proto účaří sedí
-   0,09 em NAD hřebenem a teprve pohyb ho zanoří — při plném záběru mizí
+   0,21 em NAD hřebenem a teprve pohyb ho zanoří — při plném záběru mizí
    spodní pětina verzálky, takže slovo zůstává čitelné. Při odjezdu sekce
    nahoru se zase vynoří celé. */
 .cta-hero__type {
   position: absolute; left: 0; right: 0;
-  bottom: calc(var(--roofline) + 0.09 * var(--cta-fs));
+  bottom: calc(var(--roofline) + 0.21 * var(--cta-fs));
   z-index: 4;
-  width: min(1000px, 58vw);
+  width: min(1150px, 60vw);
   margin-inline: auto;
   text-align: center;
   transform: translate3d(0, var(--px, 0), 0);

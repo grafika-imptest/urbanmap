@@ -39,33 +39,53 @@
     });
   }
 
-  /* ------------------------------------------------------- SMOOTH SCROLL */
+  /* ------------------------------------------------------- SMOOTH SCROLL
+     Lenis nescrolluje transformem, ale doopravdy — mění scrollTop. Díky
+     tomu zůstávají getBoundingClientRect, sticky i IntersectionObserver
+     přesné a zbytek motion systému o něm nemusí vědět.
+
+     Plochy s vlastním rolováním (výsledky, náhled projektu, paleta,
+     zásuvka, mapa) musí zůstat nativní. Řeší to `prevent`, ne atribut
+     v markupu — panely se překreslují a atribut by se ztrácel.          */
+  var NATIVNI_ROLOVANI = [
+    '[data-lenis-prevent]',
+    '.results__body', '.preview__body', '.cmd__body',
+    '.drawer__body', '.fpanel', '.maplibregl-map'
+  ].join(',');
+
   function smoothScroll() {
     if (!global.Lenis) return;
-    // Na stránkách s mapovým shellem nechceme setrvačnost — mapa a rail
-    // potřebují okamžitou odezvu. Lenis se proto zapíná jen na editorialu.
-    if (document.body.hasAttribute('data-no-smooth')) return;
 
     lenis = new global.Lenis({
-      duration: 1.05,
-      easing: function (t) { return Math.min(1, 1.001 - Math.pow(2, -10 * t)); },
+      // lerp místo duration: dojezd je plynulý a nemá pevnou délku, takže
+      // rychlé otočení kolečka nečeká na dokončení předchozí animace.
+      lerp: 0.085,
+      wheelMultiplier: 0.9,
+      touchMultiplier: 1.5,
       smoothWheel: true,
-      wheelMultiplier: 1,
-      touchMultiplier: 1.6
+      prevent: function (node) {
+        return !!(node && node.closest && node.closest(NATIVNI_ROLOVANI));
+      }
     });
 
-    function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
-    requestAnimationFrame(raf);
-
     if (hasGSAP) {
+      // Jeden takt pro obojí. Dva nezávislé rAF cykly by si předávaly
+      // hodnoty o snímek pozdě a parallax by se za scrollem opožďoval.
       lenis.on('scroll', global.ScrollTrigger.update);
-      global.ScrollTrigger.scrollerProxy(document.body, {
-        scrollTop: function (v) {
-          if (arguments.length) lenis.scrollTo(v, { immediate: true });
-          return lenis.animatedScroll;
-        }
-      });
+      global.gsap.ticker.add(function (time) { lenis.raf(time * 1000); });
+      global.gsap.ticker.lagSmoothing(0);
+    } else {
+      (function raf(time) { lenis.raf(time); requestAnimationFrame(raf); })();
     }
+
+    // Overlaye zamykají rolování třídou na <body>. Samotné overflow:hidden
+    // Lenis nezastaví — musí dostat vlastní pokyn, jinak se pod otevřeným
+    // vyhledáváním stránka dál posouvá.
+    var mo = new MutationObserver(function () {
+      if (document.body.classList.contains('is-locked')) lenis.stop(); else lenis.start();
+    });
+    mo.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
     global.UM_LENIS = lenis;
   }
 
