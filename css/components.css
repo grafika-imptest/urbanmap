@@ -18,9 +18,17 @@
 }
 .header--solid { background: var(--paper); }
 
+/* Ikonová tlačítka nesmí flex zmáčknout. Bez `flex: none` se pod ~400 px
+   smrskla na 1 px — přepínač tématu i burger prakticky zmizely. */
+.header .btn--icon { flex: none; }
+/* Značka je široká (poměr zhruba 6 : 1), na úzkých displejích se zmenší. */
+@media (max-width: 620px) { .header .wordmark { --logo-h: 26px; } }
+/* Na nejužších displejích nese „Přidat projekt“ zásuvka. */
+@media (max-width: 520px) { .header .btn--primary { display: none; } }
+
 /* Wordmark ---------------------------------------------------------------- */
 .wordmark { display: inline-flex; align-items: center; flex: none; }
-.wordmark img { display: block; height: var(--logo-h, 21px); width: auto; }
+.wordmark img { display: block; height: var(--logo-h, 34px); width: auto; }
 
 /* Dvě varianty souboru, ne filtr — značka je dvoubarevná a invert by
    posunul i hnědou. */
@@ -468,15 +476,31 @@
   background: var(--surface-inv); color: var(--ink-inv);
   padding-block: clamp(56px, 7vw, 110px) var(--s-8);
 }
+/* .lead nese `color: var(--ink-70)` — světlý ink. Na inverzním podkladu
+   patičky vycházel kontrast ~1,8:1. Proto se tu barva přebíjí na --ink-inv,
+   které se s tématem překlápí spolu s podkladem. */
+.footer .lead { color: color-mix(in srgb, var(--ink-inv) 78%, transparent); }
 .footer a { color: rgba(244,239,232,.64); transition: color var(--d-micro); }
 .footer a:hover { color: #fff; }
 :root[data-theme="dark"] .footer a { color: rgba(26,22,19,.68); }
 :root[data-theme="dark"] .footer a:hover { color: #000; }
 .footer__grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.7fr) repeat(auto-fit, minmax(146px, 1fr));
+  grid-template-columns: minmax(0, 1.7fr) repeat(4, minmax(0, 1fr));
   gap: clamp(28px, 3.5vw, 72px);
   padding-bottom: clamp(48px, 6vw, 96px);
+}
+.footer__col { min-width: 0; }
+/* Dřív tu bylo `repeat(auto-fit, minmax(146px, 1fr))`. Auto-fit ale sloupce
+   nesmrští pod jejich minimum, takže se pod ~1080 px mřížka rozjela za
+   kontejner a text značky se vykreslil pod odkazovými sloupci. Explicitní
+   zlomy: značka přes celou šířku, odkazy pod ní. */
+@media (max-width: 1080px) {
+  .footer__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .footer__grid > .footer__col:first-child { grid-column: 1 / -1; }
+}
+@media (max-width: 560px) {
+  .footer__grid { grid-template-columns: minmax(0, 1fr); }
 }
 .footer__col h4 {
   font-family: var(--font-sans); font-size: var(--t-xs);
