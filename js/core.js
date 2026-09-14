@@ -222,9 +222,9 @@
               'Mapově-datová platforma pro nové developerské projekty v České republice. ' +
               'Najděte nové bydlení nebo investiční příležitost podle lokality.</p>' +
             '<div class="row row--gap" style="margin-top:28px;gap:20px;flex-wrap:wrap">' +
-              '<div><span class="meta" style="opacity:.5">Projektů</span><b class="num" style="display:block;font-size:1.25rem;margin-top:6px">' + t.projects + '</b></div>' +
-              '<div><span class="meta" style="opacity:.5">Jednotek</span><b class="num" style="display:block;font-size:1.25rem;margin-top:6px">' + num(t.units) + '</b></div>' +
-              '<div><span class="meta" style="opacity:.5">Developerů</span><b class="num" style="display:block;font-size:1.25rem;margin-top:6px">' + t.developers + '</b></div>' +
+              '<div><span class="meta">Projektů</span><b class="num" style="display:block;font-size:1.25rem;margin-top:6px">' + t.projects + '</b></div>' +
+              '<div><span class="meta">Jednotek</span><b class="num" style="display:block;font-size:1.25rem;margin-top:6px">' + num(t.units) + '</b></div>' +
+              '<div><span class="meta">Developerů</span><b class="num" style="display:block;font-size:1.25rem;margin-top:6px">' + t.developers + '</b></div>' +
             '</div>' +
           '</div>' +
           '<div class="footer__col"><h4>Projekty</h4><ul>' +

@@ -480,6 +480,9 @@
    patičky vycházel kontrast ~1,8:1. Proto se tu barva přebíjí na --ink-inv,
    které se s tématem překlápí spolu s podkladem. */
 .footer .lead { color: color-mix(in srgb, var(--ink-inv) 78%, transparent); }
+/* Totéž u .meta, která nese --ink-45: v patičce z toho vycházelo kolem
+   1,5 : 1. Popisky jsou drobné písmo, takže drží víc krytí než odstavec. */
+.footer .meta { color: color-mix(in srgb, var(--ink-inv) 64%, transparent); }
 .footer a { color: rgba(244,239,232,.64); transition: color var(--d-micro); }
 .footer a:hover { color: #fff; }
 :root[data-theme="dark"] .footer a { color: rgba(26,22,19,.68); }
@@ -504,7 +507,8 @@
 }
 .footer__col h4 {
   font-family: var(--font-sans); font-size: var(--t-xs);
-  opacity: .5; margin-bottom: var(--s-5); font-weight: 500;
+  /* .5 dávalo v tmavém režimu 3,3 : 1 — pod hranicí čitelnosti. */
+  opacity: .66; margin-bottom: var(--s-5); font-weight: 500;
 }
 .footer__col li { margin-bottom: 10px; font-size: var(--t-sm); }
 .footer__bar {
@@ -512,7 +516,7 @@
   align-items: center; justify-content: space-between;
   padding-top: var(--s-6);
   border-top: 1px solid rgba(244,239,232,.15);
-  font-family: var(--font-sans); font-size: var(--t-xs); opacity: .55;
+  font-family: var(--font-sans); font-size: var(--t-xs); opacity: .66;
 }
 :root[data-theme="dark"] .footer__bar { border-color: rgba(26,22,19,.17); }
 
